@@ -9,26 +9,29 @@ dotenv.config();
 
 const app = express();
 
-const allowedOrigins = [
-  process.env.CLIENT_DEV_URL,
-  process.env.CLIENT_PROD_URL,
-].filter(Boolean); 
+// Simplified CORS configuration
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or Postman)
+    if (!origin) return callback(null, true);
+    
+    const allowedOrigins = [
+      "http://localhost:5173", // Local development
+      "https://iatrosense.vercel.app", // Your production frontend
+      process.env.CLIENT_DEV_URL,
+      process.env.CLIENT_PROD_URL
+    ].filter(Boolean); // Remove any undefined values
 
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true
+};
 
-      if (allowedOrigins.indexOf(origin) === -1) {
-        const msg =
-          "The CORS policy for this site does not allow access from the specified Origin.";
-        return callback(new Error(msg), false);
-      }
-      return callback(null, true);
-    },
-    credentials: true,
-  })
-);
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(morgan(process.env.NODE_ENV === "development" ? "dev" : "combined"));
 app.use(cookieParser());
@@ -36,7 +39,17 @@ app.use(cookieParser());
 app.use("/api/auth", authRoutes);
 
 app.get("/health", (req, res) => {
-  res.status(200).json({ status: "OK", timestamp: new Date().toISOString() });
+  res.status(200).json({ 
+    status: "OK", 
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV,
+    allowedOrigins: [
+      "http://localhost:5173",
+      "https://iatrosense.vercel.app",
+      process.env.CLIENT_DEV_URL,
+      process.env.CLIENT_PROD_URL
+    ].filter(Boolean)
+  });
 });
 
 export default app;
