@@ -14,7 +14,6 @@ const userSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: true,
       minlength: 6,
     },
     faculty: {
@@ -48,6 +47,16 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
       enum: ["1", "2", "3", "4", "5", "6", "7"],
+    },
+    googleId: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
+    authMethod: {
+      type: String,
+      enum: ["local", "google"],
+      default: "local",
     },
   },
   { timestamps: true }
